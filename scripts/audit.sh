@@ -33,6 +33,12 @@ check "Сертификат действителен более 30 дней" "0"
 check "Нет файлов с правом записи для всех" "" "$(sudo find /var/www/devops-site -perm -o+w)"
 check "Права ключа TLS равны 600" "600" "$(sudo stat -c '%a' /etc/ssl/private/devops.key)"
 
+echo "[5] Контейнеризация"
+check "Служба Docker активна" "active" "$(systemctl is-active docker)"
+check "Контейнер СУБД healthy" "healthy" "$(docker inspect -f '{{.State.Health.Status}}' app-db-1 2>/dev/null || echo 'not_found')"
+check "Порты скрыты от сети" "" "$(ss -tln | grep -E ':(5000|5432)\b' | grep -v '127.0.0.1' || true)"
+check "Права .env равны 600" "600" "$(stat -c '%a' ~/app/.env 2>/dev/null || echo 'no_file')"
+
 echo ""
 echo "Пройдено: $PASS, не пройдено: $FAIL"
 [[ $FAIL -eq 0 ]] && exit 0 || exit 1
